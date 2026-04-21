@@ -1,11 +1,11 @@
 # Projects for Semantic Segmentation
 # セマンティックセグメンテーション プロジェクト
 
-This guide provides three practical, beginner-friendly projects to help you start your journey in semantic segmentation. Each project focuses on a distinct application area with manageable datasets.
+<!-- This guide provides three practical, beginner-friendly projects to help you start your journey in semantic segmentation. Each project focuses on a distinct application area with manageable datasets.
 
-このガイドでは、セマンティックセグメンテーションの学習を始めるのに役立つ、実践的で初心者向けの3つのプロジェクトを紹介します。各プロジェクトは、扱いやすいデータセットを用いた明確な応用分野に焦点を当てています。
+このガイドでは、セマンティックセグメンテーションの学習を始めるのに役立つ、実践的で初心者向けの3つのプロジェクトを紹介します。各プロジェクトは、扱いやすいデータセットを用いた明確な応用分野に焦点を当てています。 -->
 
----
+<!-- ---
 
 ## 1. Portrait Matting & Background Swap / 人物セグメンテーションと背景の置き換え
 
@@ -67,7 +67,7 @@ By analyzing top-down views from satellites or drones, we can automatically outl
 * **Massachusetts Buildings Dataset:** A classic dataset for building extraction with relatively clean imagery. / 画像が比較的鮮明な、建物抽出のための古典的なデータセット。
 * **WHU Building Dataset:** A high-resolution dataset perfect for practicing precise edge segmentation. / 正確なエッジセグメンテーションの練習に最適な高解像度データセット。
 
-------
+------ -->
 
 ***
 
