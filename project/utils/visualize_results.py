@@ -31,7 +31,8 @@ Usage / 使い方:
 """
 
 from __future__ import annotations
-
+import sys
+import os
 import argparse
 import random
 from pathlib import Path
@@ -42,10 +43,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from dataset import CityscapesBinaryDataset
-from metrics import binary_iou
-from model import build_model
-from transforms import IMAGENET_MEAN, IMAGENET_STD, get_edge_case_transform, get_val_transform
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from data_factory.dataset import CityscapesBinaryDataset
+from utils.metrics import binary_iou
+from networks.model import build_model
+from data_factory.transforms import IMAGENET_MEAN, IMAGENET_STD, get_edge_case_transform, get_val_transform
 
 
 # ── Colour constants ───────────────────────────────────────────────────────────
@@ -454,7 +456,7 @@ def visualize_edge_cases(
             edge_tf = get_edge_case_transform(crop_size, cond)
 
             # Re-apply edge-case transform (image only — mask not needed for display)
-            from dataset import ROAD_LABEL_ID
+            from data_factory.dataset import ROAD_LABEL_ID
             import numpy as _np2
             from PIL import Image as PILImage2
             raw_mask = _np2.array(PILImage2.open(dataset.mask_paths[idx]), dtype=_np2.int32)

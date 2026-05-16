@@ -41,10 +41,10 @@ import torch
 import torch.nn as nn
 from torch.cuda.amp import GradScaler, autocast
 
-from dataset import get_dataloader
-from metrics import MetricTracker, binary_dice, binary_iou, pixel_accuracy
-from model import CombinedLoss, build_model, freeze_encoder, print_model_summary, unfreeze_encoder
-from transforms import get_train_transform, get_val_transform
+from data_factory.dataset import get_dataloader
+from utils.metrics import MetricTracker, binary_dice, binary_iou, pixel_accuracy
+from networks.model import CombinedLoss, build_model, freeze_encoder, print_model_summary, unfreeze_encoder
+from data_factory.transforms import get_train_transform, get_val_transform
 
 # ── Defaults (mirrors topics.md §6 Phase 3 hyperparameter table) ──────────────
 DEFAULTS = {

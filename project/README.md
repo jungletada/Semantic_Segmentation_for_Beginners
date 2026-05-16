@@ -11,20 +11,25 @@ Cityscapesデータセットと U-Net モデルを使用した走行可能道路
 ```
 project/
 ├── data/
-│   └── cityscapes/            ← Dataset goes here (see Step 1)
-├── data_factory/              ← Helper utilities
-├── checkpoints/               ← Created automatically during training
-├── dataset.py                 ← Phase 1: PyTorch Dataset & DataLoader
-├── transforms.py              ← Phase 1: Albumentations augmentation pipelines
-├── explore_data.py            ← Phase 1: Dataset verification & visualisation
-├── model.py                   ← Phase 2: U-Net factory, CombinedLoss, utilities
-├── metrics.py                 ← Phase 2: IoU, Dice, Pixel Accuracy, MetricTracker
-├── train.py                   ← Phase 3: Full training loop with checkpointing
-├── evaluate.py                ← Phase 4: Metrics, confusion matrix, threshold sweep
-├── visualize_results.py       ← Phase 5: Prediction grids, failure modes, edge cases
+│   └── cityscapes/                    ← Dataset goes here (see Step 1)
+├── data_factory/                      ← Phase 1: Data pipeline package
+│   ├── __init__.py
+│   ├── dataset.py                     ← PyTorch Dataset & DataLoader
+│   ├── transforms.py                  ← Albumentations augmentation pipelines
+│   └── explore_data.py                ← Dataset verification & visualisation
+├── networks/                          ← Phase 2: Model package
+│   ├── __init__.py
+│   └── model.py                       ← U-Net factory, CombinedLoss, utilities
+├── utils/                             ← Phase 2 / 5: Shared utilities
+│   ├── __init__.py
+│   ├── metrics.py                     ← IoU, Dice, Pixel Accuracy, MetricTracker
+│   └── visualize_results.py           ← Prediction grids, failure modes, edge cases
+├── checkpoints/                       ← Created automatically during training
+├── train.py                           ← Phase 3: Full training loop with checkpointing
+├── evaluate.py                        ← Phase 4: Metrics, confusion matrix, threshold sweep
 ├── requirements.txt
-├── topics.md                  ← Detailed project reference document
-└── README.md                  ← This file
+├── topics.md                          ← Detailed project reference document
+└── README.md                          ← This file
 ```
 
 ---
@@ -99,9 +104,9 @@ data/cityscapes/
 
 > **Important / 重要**  
 > `gtFine_labelIds.png` uses **raw label IDs** (0–33). Road = raw ID **7** (not 0).  
-> This is handled automatically by `dataset.py`.  
+> This is handled automatically by `data_factory/dataset.py`.  
 > `gtFine_labelIds.png` は**生のラベルID**（0〜33）を使います。道路 = ID **7**（0ではない）。  
-> `dataset.py` が自動的に処理します。
+> `data_factory/dataset.py` が自動的に処理します。
 
 ---
 
@@ -111,7 +116,7 @@ Verify the dataset and visualise sample images before training.
 訓練前にデータセットを検証してサンプル画像を可視化します。
 
 ```bash
-python explore_data.py --root data/cityscapes
+python data_factory/explore_data.py --root data/cityscapes
 ```
 
 **Optional arguments / オプション引数:**
@@ -232,7 +237,7 @@ evaluation_results/
 ### Prediction grid (default) / 予測グリッド（デフォルト）
 
 ```bash
-python visualize_results.py \
+python utils/visualize_results.py \
     --data_root  data/cityscapes \
     --checkpoint checkpoints/best.pth \
     --n          6
@@ -241,7 +246,7 @@ python visualize_results.py \
 ### Best vs. worst predictions / ベストとワーストの予測
 
 ```bash
-python visualize_results.py \
+python utils/visualize_results.py \
     --data_root  data/cityscapes \
     --checkpoint checkpoints/best.pth \
     --mode       best_worst \
@@ -251,7 +256,7 @@ python visualize_results.py \
 ### Failure mode analysis / 失敗モード分析
 
 ```bash
-python visualize_results.py \
+python utils/visualize_results.py \
     --data_root  data/cityscapes \
     --checkpoint checkpoints/best.pth \
     --mode       failure_modes \
@@ -261,7 +266,7 @@ python visualize_results.py \
 ### Edge-case conditions / エッジケース条件
 
 ```bash
-python visualize_results.py \
+python utils/visualize_results.py \
     --data_root  data/cityscapes \
     --checkpoint checkpoints/best.pth \
     --mode       edge_cases \
@@ -271,7 +276,7 @@ python visualize_results.py \
 ### Run everything at once / すべてを一度に実行
 
 ```bash
-python visualize_results.py \
+python utils/visualize_results.py \
     --data_root  data/cityscapes \
     --checkpoint checkpoints/best.pth \
     --mode       all
@@ -315,10 +320,10 @@ visualization_results/
 ```
 [ ] 1. pip install -r requirements.txt && pip install segmentation-models-pytorch
 [ ] 2. Download & extract Cityscapes into data/cityscapes/
-[ ] 3. python explore_data.py --root data/cityscapes       # verify data
-[ ] 4. python train.py --data_root data/cityscapes --amp   # train
-[ ] 5. python evaluate.py --data_root data/cityscapes      # evaluate
-[ ] 6. python visualize_results.py --data_root data/cityscapes --mode all
+[ ] 3. python data_factory/explore_data.py --root data/cityscapes        # verify data
+[ ] 4. python train.py --data_root data/cityscapes --amp                 # train
+[ ] 5. python evaluate.py --data_root data/cityscapes                    # evaluate
+[ ] 6. python utils/visualize_results.py --data_root data/cityscapes --mode all
 ```
 
 ---

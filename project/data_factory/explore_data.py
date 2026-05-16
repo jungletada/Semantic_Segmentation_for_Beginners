@@ -24,6 +24,8 @@ Usage / 使い方:
 from __future__ import annotations
 
 import argparse
+import os
+import sys
 from pathlib import Path
 
 import matplotlib.patches as mpatches
@@ -31,12 +33,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
-from dataset import ROAD_LABEL_ID, CityscapesBinaryDataset, get_dataloader
-from transforms import IMAGENET_MEAN, IMAGENET_STD, get_train_transform, get_val_transform
+# Allow running as `python data_factory/explore_data.py` from the project root
+# プロジェクトルートから `python data_factory/explore_data.py` として実行可能にする
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from data_factory.dataset import ROAD_LABEL_ID, CityscapesBinaryDataset, get_dataloader
+from data_factory.transforms import IMAGENET_MEAN, IMAGENET_STD, get_train_transform, get_val_transform
 
 # Default path: project/data/cityscapes relative to this file
 # デフォルトパス：このファイルからの相対パス project/data/cityscapes
-DEFAULT_ROOT = Path(__file__).parent / "data" / "cityscapes"
+DEFAULT_ROOT = Path(__file__).parent.parent / "data" / "cityscapes"
 
 
 # ── 1. Dataset size check ──────────────────────────────────────────────────────

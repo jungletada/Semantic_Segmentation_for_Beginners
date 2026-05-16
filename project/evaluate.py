@@ -37,10 +37,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from dataset import CityscapesBinaryDataset, get_dataloader
-from metrics import MetricTracker, binary_dice, binary_iou, pixel_accuracy
-from model import build_model
-from transforms import get_val_transform
+from data_factory.dataset import CityscapesBinaryDataset, get_dataloader
+from utils.metrics import MetricTracker, binary_dice, binary_iou, pixel_accuracy
+from networks.model import build_model
+from data_factory.transforms import get_val_transform
 
 
 # ── Confusion-matrix helper ────────────────────────────────────────────────────
