@@ -1,4 +1,4 @@
 .DS_Store
-data/
+project_data/
 *.pth
 *.pt
