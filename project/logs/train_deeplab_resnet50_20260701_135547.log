@@ -34,3 +34,101 @@ Epoch [  1/50]  time=57s  lr=1.00e-04
   Val   — loss=0.1542  iou=0.9197  dice=0.9494  pa=0.9638
   ★ New best val IoU: 0.9197 — saved → checkpoints/deeplab_resnet50/best.pth
 
+Epoch [  2/50]  time=57s  lr=1.00e-04
+  Train — loss=0.2325  iou=0.8724  dice=0.9294
+  Val   — loss=0.1529  iou=0.9217  dice=0.9499  pa=0.9661
+  ★ New best val IoU: 0.9217 — saved → checkpoints/deeplab_resnet50/best.pth
+
+Epoch [  3/50]  time=57s  lr=1.00e-04
+  Train — loss=0.2066  iou=0.8845  dice=0.9366
+  Val   — loss=0.1410  iou=0.9160  dice=0.9459  pa=0.9639
+  No improvement (1/7). Best so far: 0.9217
+
+Epoch [  4/50]  time=57s  lr=1.00e-04
+  Train — loss=0.1989  iou=0.8852  dice=0.9365
+  Val   — loss=0.1358  iou=0.9309  dice=0.9551  pa=0.9697
+  ★ New best val IoU: 0.9309 — saved → checkpoints/deeplab_resnet50/best.pth
+
+Epoch [  5/50]  time=57s  lr=1.00e-04
+  Train — loss=0.1674  iou=0.9029  dice=0.9471
+  Val   — loss=0.1196  iou=0.9244  dice=0.9511  pa=0.9693
+  No improvement (1/7). Best so far: 0.9309
+
+Epoch [  6/50]  time=57s  lr=1.00e-04
+  Train — loss=0.1700  iou=0.9024  dice=0.9468
+  Val   — loss=0.1289  iou=0.9277  dice=0.9529  pa=0.9686
+  No improvement (2/7). Best so far: 0.9309
+
+Epoch [  7/50]  time=57s  lr=1.00e-04
+  Train — loss=0.1776  iou=0.9003  dice=0.9458
+  Val   — loss=0.1328  iou=0.9297  dice=0.9545  pa=0.9681
+  No improvement (3/7). Best so far: 0.9309
+
+Epoch [  8/50]  time=57s  lr=1.00e-04
+  Train — loss=0.1520  iou=0.9129  dice=0.9534
+  Val   — loss=0.1203  iou=0.9310  dice=0.9553  pa=0.9698
+  ★ New best val IoU: 0.9310 — saved → checkpoints/deeplab_resnet50/best.pth
+
+Epoch [  9/50]  time=57s  lr=1.00e-04
+  Train — loss=0.1543  iou=0.9112  dice=0.9519
+  Val   — loss=0.1289  iou=0.9224  dice=0.9487  pa=0.9666
+  No improvement (1/7). Best so far: 0.9310
+
+Epoch [ 10/50]  time=57s  lr=1.00e-04
+  Train — loss=0.1448  iou=0.9164  dice=0.9552
+  Val   — loss=0.1210  iou=0.9271  dice=0.9523  pa=0.9700
+  No improvement (2/7). Best so far: 0.9310
+
+Epoch [ 11/50]  time=57s  lr=1.00e-04
+  Train — loss=0.1474  iou=0.9138  dice=0.9535
+  Val   — loss=0.1083  iou=0.9365  dice=0.9581  pa=0.9738
+  ★ New best val IoU: 0.9365 — saved → checkpoints/deeplab_resnet50/best.pth
+
+Epoch [ 12/50]  time=57s  lr=1.00e-04
+  Train — loss=0.1428  iou=0.9180  dice=0.9559
+  Val   — loss=0.1187  iou=0.9234  dice=0.9498  pa=0.9696
+  No improvement (1/7). Best so far: 0.9365
+
+Epoch [ 13/50]  time=57s  lr=1.00e-04
+  Train — loss=0.1419  iou=0.9183  dice=0.9561
+  Val   — loss=0.1479  iou=0.9065  dice=0.9385  pa=0.9644
+  No improvement (2/7). Best so far: 0.9365
+
+Epoch [ 14/50]  time=57s  lr=1.00e-04
+  Train — loss=0.1383  iou=0.9185  dice=0.9560
+  Val   — loss=0.1149  iou=0.9289  dice=0.9530  pa=0.9717
+  No improvement (3/7). Best so far: 0.9365
+
+Epoch [ 15/50]  time=57s  lr=1.00e-04
+  Train — loss=0.1314  iou=0.9225  dice=0.9585
+  Val   — loss=0.1423  iou=0.9237  dice=0.9501  pa=0.9665
+  No improvement (4/7). Best so far: 0.9365
+
+Epoch [ 16/50]  time=57s  lr=1.00e-04
+  Train — loss=0.1332  iou=0.9210  dice=0.9577
+  Val   — loss=0.1330  iou=0.9214  dice=0.9481  pa=0.9675
+  No improvement (5/7). Best so far: 0.9365
+
+Epoch [ 17/50]  time=57s  lr=1.00e-04
+  Train — loss=0.1340  iou=0.9237  dice=0.9590
+  Val   — loss=0.1094  iou=0.9342  dice=0.9565  pa=0.9728
+  No improvement (6/7). Best so far: 0.9365
+
+Epoch [ 18/50]  time=57s  lr=5.00e-05
+  Train — loss=0.1104  iou=0.9342  dice=0.9649
+  Val   — loss=0.1377  iou=0.9147  dice=0.9422  pa=0.9660
+  No improvement (7/7). Best so far: 0.9365
+
+Early stopping after 18 epochs (no improvement for 7 epochs).
+7 エポック改善なし — 18 エポックで早期終了。
+
+============================================================
+Training complete! / 訓練完了！
+  Epochs run         : 18
+  Best val IoU       : 0.9365
+  Best model saved   : checkpoints/deeplab_resnet50/best.pth
+  Last model saved   : checkpoints/deeplab_resnet50/last.pth
+============================================================
+
+Training curve saved -> checkpoints/deeplab_resnet50/training_curves.pdf
+Training curve saved -> checkpoints/deeplab_resnet50/training_curves.png
