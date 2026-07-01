@@ -33,13 +33,16 @@ import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+
+plt.rcParams["pdf.fonttype"] = 42
+plt.rcParams["ps.fonttype"] = 42
 import numpy as np
 import torch
 import torch.nn as nn
 
 from data_factory.dataset import CityscapesBinaryDataset, get_dataloader
 from utils.metrics import MetricTracker, binary_dice, binary_iou, pixel_accuracy
-from networks.model import build_model
+from networks.model import build_model, parse_encoder_weights, resolve_model_name
 from data_factory.transforms import get_val_transform
 
 
@@ -185,11 +188,11 @@ def plot_confusion_matrix(cm: dict[str, int], save_path: Path) -> None:
 
     ax.set_xticks([0, 1])
     ax.set_yticks([0, 1])
-    ax.set_xticklabels(["Pred: BG / 背景", "Pred: Road / 道路"])
-    ax.set_yticklabels(["GT: BG / 背景",   "GT: Road / 道路"])
-    ax.set_title("Confusion Matrix / 混同行列", fontweight="bold")
+    ax.set_xticklabels(["Pred: BG", "Pred: Road"])
+    ax.set_yticklabels(["GT: BG", "GT: Road"])
+    ax.set_title("Confusion Matrix", fontweight="bold")
     plt.tight_layout()
-    plt.savefig(save_path, dpi=120)
+    plt.savefig(save_path, dpi=300)
     plt.close()
     print(f"   Saved → {save_path}")
 
@@ -208,15 +211,15 @@ def plot_threshold_sweep(sweep: dict[float, float], save_path: Path) -> None:
     ax.plot(taus, ious, marker="o", color="#2980b9", linewidth=2)
     ax.axvline(best_tau, color="#e74c3c", linewidth=1.5, linestyle="--",
                label=f"Best τ={best_tau:.1f}  IoU={best_iou:.4f}")
-    ax.set_xlabel("Sigmoid threshold τ / シグモイド閾値 τ")
+    ax.set_xlabel("Sigmoid threshold")
     ax.set_ylabel("Mean val IoU")
-    ax.set_title("IoU vs. Threshold / IoU vs. 閾値", fontweight="bold")
+    ax.set_title("IoU vs. Threshold", fontweight="bold")
     ax.legend()
     ax.grid(alpha=0.3)
     ax.set_xlim(min(taus) - 0.05, max(taus) + 0.05)
     ax.set_ylim(0, 1)
     plt.tight_layout()
-    plt.savefig(save_path, dpi=120)
+    plt.savefig(save_path, dpi=300)
     plt.close()
     print(f"   Saved → {save_path}")
 
@@ -232,14 +235,14 @@ def plot_iou_distribution(records: list[dict], save_path: Path) -> None:
     fig, ax = plt.subplots(figsize=(7, 4))
     ax.hist(ious, bins=30, color="#27ae60", edgecolor="white", alpha=0.85)
     ax.axvline(mean_iou, color="#e74c3c", linewidth=2,
-               label=f"Mean IoU / 平均: {mean_iou:.4f}")
-    ax.set_xlabel("Per-image IoU / 画像ごとの IoU")
-    ax.set_ylabel("Count / 枚数")
-    ax.set_title("IoU Distribution — Val Split / IoU 分布 — 検証分割", fontweight="bold")
+               label=f"Mean IoU: {mean_iou:.4f}")
+    ax.set_xlabel("Per-image IoU")
+    ax.set_ylabel("Count")
+    ax.set_title("IoU Distribution - Val Split", fontweight="bold")
     ax.legend()
     ax.grid(alpha=0.3)
     plt.tight_layout()
-    plt.savefig(save_path, dpi=120)
+    plt.savefig(save_path, dpi=300)
     plt.close()
     print(f"   Saved → {save_path}")
 
@@ -252,15 +255,25 @@ def evaluate(args: argparse.Namespace) -> None:
     Full evaluation pipeline.
     完全な評価パイプライン。
     """
-    out_dir = Path(args.out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir: Path | None = None
 
     # ── Device ────────────────────────────────────────────────────────────────
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"\nDevice / デバイス: {device}")
 
     # ── Load checkpoint ────────────────────────────────────────────────────────
-    ckpt_path = Path(args.checkpoint)
+    requested_model_source = args.model_source.lower()
+    if args.checkpoint:
+        ckpt_path = Path(args.checkpoint)
+    else:
+        requested_model_name = resolve_model_name(
+            model_source=requested_model_source,
+            model_name=args.model_name,
+            arch=args.arch,
+            encoder_name=args.encoder,
+        )
+        ckpt_path = Path(args.checkpoint_dir) / requested_model_name / "best.pth"
+
     if not ckpt_path.exists():
         raise FileNotFoundError(f"Checkpoint not found: {ckpt_path}")
 
@@ -269,13 +282,32 @@ def evaluate(args: argparse.Namespace) -> None:
     config = ckpt.get("config", {})
     arch   = config.get("arch",     args.arch)
     enc    = config.get("encoder",  args.encoder)
+    model_source = config.get("model_source", requested_model_source).lower()
+    model_name = config.get("model_name") or resolve_model_name(
+        model_source=model_source,
+        model_name=args.model_name,
+        arch=arch,
+        encoder_name=enc,
+    )
+    encoder_weights = config.get("encoder_weights", parse_encoder_weights(args.encoder_weights))
+
+    out_dir = Path(args.out_dir) if args.out_dir else Path("evaluation_results") / model_name
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"  Checkpoint epoch : {ckpt.get('epoch', 'unknown')}")
     print(f"  Checkpoint val IoU: {ckpt.get('val_iou', 'unknown'):.4f}")
+    print(f"  Model source      : {model_source}")
+    print(f"  Model name        : {model_name}")
     print(f"  Architecture     : {arch} / {enc}")
 
     # ── Build model ────────────────────────────────────────────────────────────
-    model = build_model(arch=arch, encoder_name=enc).to(device)
+    model = build_model(
+        model_source   = model_source,
+        model_name     = model_name,
+        arch           = arch,
+        encoder_name   = enc,
+        encoder_weights= None,
+    ).to(device)
     model.load_state_dict(ckpt["model_state_dict"])
     model.eval()
 
@@ -369,15 +401,18 @@ def evaluate(args: argparse.Namespace) -> None:
     print("4. Saving Plots / グラフを保存中")
     print("=" * 55)
 
-    plot_confusion_matrix(cm_total, out_dir / "confusion_matrix.png")
-    plot_threshold_sweep(sweep,     out_dir / "threshold_sweep.png")
-    plot_iou_distribution(records,  out_dir / "iou_distribution.png")
+    plot_confusion_matrix(cm_total, out_dir / "confusion_matrix.pdf")
+    plot_threshold_sweep(sweep,     out_dir / "threshold_sweep.pdf")
+    plot_iou_distribution(records,  out_dir / "iou_distribution.pdf")
 
     # ── 5. Save JSON report ────────────────────────────────────────────────────
     report = {
         "checkpoint"      : str(ckpt_path),
+        "model_source"    : model_source,
+        "model_name"      : model_name,
         "arch"            : arch,
         "encoder"         : enc,
+        "encoder_weights" : encoder_weights,
         "threshold"       : args.threshold,
         "best_threshold"  : best_tau,
         "overall_metrics" : means,
@@ -420,12 +455,20 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--data_root",   type=str, required=True,
                         help="Cityscapes root directory / Cityscapes ルートディレクトリ")
-    parser.add_argument("--checkpoint",  type=str, default="checkpoints/best.pth",
-                        help="Path to .pth checkpoint / チェックポイントパス")
+    parser.add_argument("--checkpoint",  type=str, default=None,
+                        help="Path to .pth checkpoint. If omitted, uses checkpoints/<model_name>/best.pth.")
+    parser.add_argument("--checkpoint_dir", type=str, default="checkpoints",
+                        help="Root checkpoint directory used when --checkpoint is omitted.")
+    parser.add_argument("--model_source", type=str, default="smp", choices=["smp", "custom"],
+                        help="Model source used when checkpoint config is missing.")
+    parser.add_argument("--model_name", type=str, default=None,
+                        help="Model identity used to locate checkpoints and select custom models.")
     parser.add_argument("--arch",        type=str, default="unet",
-                        help="Architecture (used if config missing in ckpt) / アーキテクチャ")
+                        help="SMP architecture (used if config missing in ckpt).")
     parser.add_argument("--encoder",     type=str, default="resnet34",
-                        help="Encoder backbone / エンコーダバックボーン")
+                        help="SMP encoder backbone (used if config missing in ckpt).")
+    parser.add_argument("--encoder_weights", type=str, default="imagenet",
+                        help="SMP encoder weights fallback. Use none to disable.")
     parser.add_argument("--threshold",   type=float, default=0.5,
                         help="Sigmoid threshold τ / シグモイド閾値 τ")
     parser.add_argument("--batch_size",  type=int, default=8,
@@ -436,8 +479,8 @@ def parse_args() -> argparse.Namespace:
                         help="DataLoader workers / DataLoader ワーカー数")
     parser.add_argument("--top_n",       type=int, default=5,
                         help="Number of best/worst samples to report / レポートする最良/最悪サンプル数")
-    parser.add_argument("--out_dir",     type=str, default="evaluation_results",
-                        help="Directory for output files / 出力ファイルのディレクトリ")
+    parser.add_argument("--out_dir",     type=str, default=None,
+                        help="Output directory. Defaults to evaluation_results/<model_name>.")
     return parser.parse_args()
 
 

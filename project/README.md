@@ -148,9 +148,10 @@ python train.py --data_root data/cityscapes
 
 ```bash
 python train.py \
-    --data_root  data/cityscapes \
-    --arch       unet \
-    --encoder    resnet34 \
+    --data_root    data/cityscapes \
+    --model_name   unet_resnet34 \
+    --arch         unet \
+    --encoder      resnet34 \
     --epochs     50 \
     --batch_size 8 \
     --lr         1e-4 \
@@ -164,8 +165,11 @@ python train.py \
 | Argument | Default | Description |
 |----------|---------|-------------|
 | `--data_root` | *(required)* | Cityscapes root directory |
-| `--arch` | `unet` | Architecture: `unet` / `unetplusplus` / `deeplabv3plus` |
-| `--encoder` | `resnet34` | Encoder: `resnet34` / `resnet50` / `efficientnet-b0` / `mobilenet_v2` |
+| `--model_source` | `smp` | Model source: `smp` / `custom` |
+| `--model_name` | `unet_resnet34` | Model identity and output folder. Required for custom models |
+| `--arch` | `unet` | SMP architecture: `unet` / `unetplusplus` / `deeplabv3plus` |
+| `--encoder` | `resnet34` | SMP encoder: `resnet34` / `resnet50` / `efficientnet-b0` / `mobilenet_v2` |
+| `--encoder_weights` | `imagenet` | SMP encoder weights. Use `none` to disable pretrained weights |
 | `--epochs` | `50` | Maximum training epochs |
 | `--batch_size` | `8` | Batch size |
 | `--lr` | `1e-4` | Initial learning rate |
@@ -175,22 +179,35 @@ python train.py \
 | `--patience` | `7` | Early-stopping patience (epochs) |
 | `--warmup` | `0` | Freeze encoder for first N epochs |
 | `--amp` | off | Enable Automatic Mixed Precision (GPU only) |
-| `--resume` | — | Resume from checkpoint, e.g. `checkpoints/last.pth` |
+| `--resume` | — | Resume from checkpoint, e.g. `checkpoints/<model_name>/last.pth` |
 | `--checkpoint_dir` | `checkpoints` | Directory to save `.pth` files |
 
 **What gets saved / 保存されるファイル:**
 
 ```
 checkpoints/
-├── best.pth              ← Best val IoU checkpoint
-├── last.pth              ← Most recent epoch checkpoint
-└── training_curves.png   ← Loss + IoU curves
+`-- <model_name>/
+    |-- best.pth              # Best val IoU checkpoint
+    |-- last.pth              # Most recent epoch checkpoint
+    |-- training_curves.png   # Loss + IoU curves
+    `-- training_curves.pdf   # Vector/PDF version of the curves
 ```
 
 **Resume training / 訓練の再開:**
 
 ```bash
-python train.py --data_root data/cityscapes --resume checkpoints/last.pth
+python train.py --data_root data/cityscapes --model_name unet_resnet34 --resume checkpoints/unet_resnet34/last.pth
+```
+
+---
+
+
+**Custom models / Custom model interface:**
+
+Add custom builders in `networks/customize_model.py`, register them with `register_custom_model("your_model", builder)`, then run:
+
+```bash
+python train.py --data_root data/cityscapes --model_source custom --model_name your_model
 ```
 
 ---
@@ -198,7 +215,7 @@ python train.py --data_root data/cityscapes --resume checkpoints/last.pth
 ## Step 4 — Evaluate the Model / モデルの評価
 
 ```bash
-python evaluate.py --data_root data/cityscapes --checkpoint checkpoints/best.pth
+python evaluate.py --data_root data/cityscapes --model_name unet_resnet34
 ```
 
 **All arguments / 全引数:**
@@ -206,20 +223,24 @@ python evaluate.py --data_root data/cityscapes --checkpoint checkpoints/best.pth
 | Argument | Default | Description |
 |----------|---------|-------------|
 | `--data_root` | *(required)* | Cityscapes root directory |
-| `--checkpoint` | `checkpoints/best.pth` | Path to `.pth` checkpoint |
+| `--checkpoint` | auto | Path to `.pth` checkpoint. If omitted, uses `checkpoints/<model_name>/best.pth` |
+| `--checkpoint_dir` | `checkpoints` | Root checkpoint directory used when `--checkpoint` is omitted |
+| `--model_source` | `smp` | Model source fallback if checkpoint config is missing |
+| `--model_name` | `unet_resnet34` | Model identity used to locate checkpoints |
 | `--threshold` | `0.5` | Sigmoid threshold τ for binary prediction |
 | `--batch_size` | `8` | Evaluation batch size |
 | `--top_n` | `5` | Best / worst samples to print |
-| `--out_dir` | `evaluation_results` | Output directory |
+| `--out_dir` | auto | Output directory. Defaults to `evaluation_results/<model_name>` |
 
 **Output files / 出力ファイル:**
 
 ```
 evaluation_results/
-├── confusion_matrix.png     ← TP / FP / FN / TN heatmap
-├── threshold_sweep.png      ← IoU vs. τ ∈ [0.1, 0.9]
-├── iou_distribution.png     ← Per-image IoU histogram
-└── evaluation_report.json   ← All metrics in JSON format
+`-- <model_name>/
+    |-- confusion_matrix.pdf     # TP / FP / FN / TN heatmap
+    |-- threshold_sweep.pdf      # IoU vs. threshold
+    |-- iou_distribution.pdf     # Per-image IoU histogram
+    `-- evaluation_report.json   # All metrics in JSON format
 ```
 
 **Target metrics / 目標メトリクス:**
@@ -287,7 +308,10 @@ python utils/visualize_results.py \
 | Argument | Default | Description |
 |----------|---------|-------------|
 | `--data_root` | *(required)* | Cityscapes root directory |
-| `--checkpoint` | `checkpoints/best.pth` | Path to `.pth` checkpoint |
+| `--checkpoint` | auto | Path to `.pth` checkpoint. If omitted, uses `checkpoints/<model_name>/best.pth` |
+| `--checkpoint_dir` | `checkpoints` | Root checkpoint directory used when `--checkpoint` is omitted |
+| `--model_source` | `smp` | Model source fallback if checkpoint config is missing |
+| `--model_name` | `unet_resnet34` | Model identity used to locate checkpoints |
 | `--mode` | `predictions` | `predictions` / `best_worst` / `failure_modes` / `edge_cases` / `all` |
 | `--n` | `6` | Number of samples to display |
 | `--n_scan` | `200` | Images to scan for failure-mode analysis |

@@ -46,7 +46,7 @@ import torch.nn as nn
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from data_factory.dataset import CityscapesBinaryDataset
 from utils.metrics import binary_iou
-from networks.model import build_model
+from networks.model import build_model, parse_encoder_weights, resolve_model_name
 from data_factory.transforms import IMAGENET_MEAN, IMAGENET_STD, get_edge_case_transform, get_val_transform
 
 
@@ -122,9 +122,9 @@ def _error_map(pred: np.ndarray, gt: np.ndarray, img: np.ndarray) -> np.ndarray:
 def _add_legend(fig: plt.Figure) -> None:
     """Attach a standard error-map legend to the figure."""
     handles = [
-        mpatches.Patch(color=TP_RGB, label="TP — Road correct / 道路を正解"),
-        mpatches.Patch(color=FP_RGB, label="FP — BG as road / 背景を道路と誤認"),
-        mpatches.Patch(color=FN_RGB, label="FN — Road missed / 道路を見逃し"),
+        mpatches.Patch(color=TP_RGB, label="TP - Road correct"),
+        mpatches.Patch(color=FP_RGB, label="FP - BG as road"),
+        mpatches.Patch(color=FN_RGB, label="FN - Road missed"),
     ]
     fig.legend(handles=handles, loc="lower center", ncol=3,
                fontsize=8, bbox_to_anchor=(0.5, -0.01))
@@ -160,16 +160,16 @@ def visualize_predictions(
         axes = axes[np.newaxis, :]
 
     fig.suptitle(
-        "Model Predictions — Val Split / モデル予測 — 検証分割\n"
+        "Model Predictions - Val Split\n"
         "Green=TP  Red=FP  Amber=FN",
         fontsize=12, fontweight="bold",
     )
 
     col_titles = [
-        "Image / 画像",
-        "Ground Truth / 正解",
-        "Prediction / 予測",
-        "Error Map / エラーマップ",
+        "Image",
+        "Ground Truth",
+        "Prediction",
+        "Error Map",
     ]
     for col, title in enumerate(col_titles):
         axes[0, col].set_title(title, fontsize=9)
@@ -238,13 +238,13 @@ def visualize_best_worst(
         axes = axes[np.newaxis, :]
 
     fig.suptitle(
-        f"Best vs. Worst Predictions (N={n}) / ベスト vs. ワースト予測\n"
+        f"Best vs. Worst Predictions (N={n})\n"
         "Green=TP  Red=FP  Amber=FN",
         fontsize=12, fontweight="bold",
     )
 
-    col_titles = ["Image / 画像", "Ground Truth / 正解",
-                  "Prediction / 予測", "Error Map / エラーマップ"]
+    col_titles = ["Image", "Ground Truth",
+                  "Prediction", "Error Map"]
     for col, title in enumerate(col_titles):
         axes[0, col].set_title(title, fontsize=9)
 
@@ -338,13 +338,13 @@ def visualize_failure_modes(
 
     fig, axes = plt.subplots(n_show * 2, 3, figsize=(14, 4 * n_show * 2))
     fig.suptitle(
-        "Failure Mode Analysis / 失敗モード分析\n"
-        "Top: FP-heavy (background mis-classified as road) / 背景を道路と誤認\n"
-        "Bottom: FN-heavy (road missed by model) / 道路を見逃し",
+        "Failure Mode Analysis\n"
+        "Top: FP-heavy (background mis-classified as road)\n"
+        "Bottom: FN-heavy (road missed by model)",
         fontsize=11, fontweight="bold",
     )
 
-    col_titles = ["Image / 画像", "Ground Truth / 正解", "Error Map / エラーマップ"]
+    col_titles = ["Image", "Ground Truth", "Error Map"]
     for col, title in enumerate(col_titles):
         axes[0, col].set_title(title, fontsize=9)
         axes[n_show, col].set_title(title, fontsize=9)
@@ -432,11 +432,11 @@ def visualize_edge_cases(
         axes = axes[np.newaxis, :]
 
     fig.suptitle(
-        "Edge-Case Condition Analysis / エッジケース条件分析",
+        "Edge-Case Condition Analysis",
         fontsize=12, fontweight="bold",
     )
-    col_titles = ["Original / 元画像", "Augmented / 拡張後",
-                  "Baseline Pred / ベースライン予測", "Condition Pred / 条件予測"]
+    col_titles = ["Original", "Augmented",
+                  "Baseline Pred", "Condition Pred"]
     for col, title in enumerate(col_titles):
         axes[0, col].set_title(title, fontsize=9)
 
@@ -507,14 +507,24 @@ def main(args: argparse.Namespace) -> None:
     Dispatcher: run the visualisation mode(s) requested by the user.
     ディスパッチャー：ユーザーが要求した可視化モードを実行します。
     """
-    out_dir = Path(args.out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir: Path | None = None
 
     # ── Device & model ────────────────────────────────────────────────────────
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"\nDevice / デバイス: {device}")
 
-    ckpt_path = Path(args.checkpoint)
+    requested_model_source = args.model_source.lower()
+    if args.checkpoint:
+        ckpt_path = Path(args.checkpoint)
+    else:
+        requested_model_name = resolve_model_name(
+            model_source=requested_model_source,
+            model_name=args.model_name,
+            arch=args.arch,
+            encoder_name=args.encoder,
+        )
+        ckpt_path = Path(args.checkpoint_dir) / requested_model_name / "best.pth"
+
     if not ckpt_path.exists():
         raise FileNotFoundError(f"Checkpoint not found: {ckpt_path}")
 
@@ -522,11 +532,29 @@ def main(args: argparse.Namespace) -> None:
     config = ckpt.get("config", {})
     arch   = config.get("arch",    args.arch)
     enc    = config.get("encoder", args.encoder)
+    model_source = config.get("model_source", requested_model_source).lower()
+    model_name = config.get("model_name") or resolve_model_name(
+        model_source=model_source,
+        model_name=args.model_name,
+        arch=arch,
+        encoder_name=enc,
+    )
+    encoder_weights = config.get("encoder_weights", parse_encoder_weights(args.encoder_weights))
     crop_size = config.get("crop_size", args.crop_size)
 
-    print(f"Loading checkpoint: {ckpt_path}  (IoU={ckpt.get('val_iou', '?'):.4f})")
+    out_dir = Path(args.out_dir) if args.out_dir else Path("visualization_results") / model_name
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    model = build_model(arch=arch, encoder_name=enc).to(device)
+    print(f"Loading checkpoint: {ckpt_path}  (IoU={ckpt.get('val_iou', '?'):.4f})")
+    print(f"Model source: {model_source}  model_name: {model_name}  arch: {arch}  encoder: {enc}")
+
+    model = build_model(
+        model_source   = model_source,
+        model_name     = model_name,
+        arch           = arch,
+        encoder_name   = enc,
+        encoder_weights= None,
+    ).to(device)
     model.load_state_dict(ckpt["model_state_dict"])
     model.eval()
 
@@ -612,12 +640,20 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--data_root",  type=str, required=True,
                         help="Cityscapes root directory / Cityscapes ルートディレクトリ")
-    parser.add_argument("--checkpoint", type=str, default="checkpoints/best.pth",
-                        help="Path to .pth checkpoint / チェックポイントパス")
+    parser.add_argument("--checkpoint", type=str, default=None,
+                        help="Path to .pth checkpoint. If omitted, uses checkpoints/<model_name>/best.pth.")
+    parser.add_argument("--checkpoint_dir", type=str, default="checkpoints",
+                        help="Root checkpoint directory used when --checkpoint is omitted.")
+    parser.add_argument("--model_source", type=str, default="smp", choices=["smp", "custom"],
+                        help="Model source used when checkpoint config is missing.")
+    parser.add_argument("--model_name", type=str, default=None,
+                        help="Model identity used to locate checkpoints and select custom models.")
     parser.add_argument("--arch",       type=str, default="unet",
-                        help="Architecture (used if config missing in ckpt) / アーキテクチャ")
+                        help="SMP architecture (used if config missing in ckpt).")
     parser.add_argument("--encoder",    type=str, default="resnet34",
-                        help="Encoder backbone / エンコーダバックボーン")
+                        help="SMP encoder backbone (used if config missing in ckpt).")
+    parser.add_argument("--encoder_weights", type=str, default="imagenet",
+                        help="SMP encoder weights fallback. Use none to disable.")
     parser.add_argument("--threshold",  type=float, default=0.5,
                         help="Sigmoid threshold τ / シグモイド閾値 τ")
     parser.add_argument("--crop_size",  type=int, default=512,
@@ -644,8 +680,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--conditions", type=str, nargs="+",
                         choices=["rain", "shadow", "fog", "night"],
                         help="Edge-case conditions to test / テストするエッジケース条件")
-    parser.add_argument("--out_dir",    type=str, default="visualization_results",
-                        help="Directory for output files / 出力ファイルのディレクトリ")
+    parser.add_argument("--out_dir",    type=str, default=None,
+                        help="Directory for output files. Defaults to visualization_results/<model_name>.")
     return parser.parse_args()
 
 

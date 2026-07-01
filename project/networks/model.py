@@ -1,29 +1,22 @@
 """
-Phase 2 — Model: binary segmentation model factory
-フェーズ2 — モデル：二値セグメンテーションモデルのファクトリ
+Phase 2 - Model factory for binary drivable-area segmentation.
 
-Wraps segmentation_models_pytorch (smp) to give students a single function
-that builds any supported architecture with the correct settings for our
-binary drivable-area task.
+This module supports two model sources:
+  - smp: models from segmentation_models_pytorch, selected by --arch/--encoder
+  - custom: user-defined models registered in networks/customize_model.py
 
-segmentation_models_pytorch (smp) をラップし、二値走行可能領域タスクに
-適切な設定で任意のサポートアーキテクチャを構築する単一の関数を提供します。
-
-Supported architectures / サポートアーキテクチャ:
-  "unet"         — U-Net (recommended / 推奨) — sharp boundaries, fast training
-  "unetplusplus" — U-Net++ — nested skip connections, slightly higher accuracy
-  "deeplabv3plus"— DeepLabV3+ — atrous convolutions, best for complex scenes
-
-Usage / 使い方:
-    from model import build_model, print_model_summary
-    model = build_model(arch="unet", encoder_name="resnet34")
-    print_model_summary(model)
+The training/evaluation scripts use model_name as the stable experiment/model
+identity for checkpoint and result folders.
 """
 
 from __future__ import annotations
 
+import re
+
 import torch
 import torch.nn as nn
+
+from networks.customize_model import CUSTOM_MODEL_BUILDERS, build_custom_model
 
 try:
     import segmentation_models_pytorch as smp
@@ -32,10 +25,12 @@ except ImportError:
     _SMP_AVAILABLE = False
 
 
-# ── Constants ──────────────────────────────────────────────────────────────────
+# Constants
 
-# Architectures available through smp
-# smpで利用可能なアーキテクチャ
+MODEL_SOURCE_SMP = "smp"
+MODEL_SOURCE_CUSTOM = "custom"
+MODEL_SOURCES = (MODEL_SOURCE_SMP, MODEL_SOURCE_CUSTOM)
+
 SUPPORTED_ARCHS: dict[str, type] = {}
 
 if _SMP_AVAILABLE:
@@ -45,78 +40,130 @@ if _SMP_AVAILABLE:
         "deeplabv3plus": smp.DeepLabV3Plus,
     }
 
-# Encoder backbones we tested and recommend
-# テスト・推奨済みのエンコーダバックボーン
 RECOMMENDED_ENCODERS = [
-    "resnet34",          # recommended default — fast, strong baseline
-    "resnet50",          # more capacity, slower to train
-    "efficientnet-b0",   # lightweight, good accuracy/speed trade-off
-    "mobilenet_v2",      # smallest — useful for rapid prototyping
+    "resnet34",
+    "resnet50",
+    "efficientnet-b0",
+    "mobilenet_v2",
 ]
 
 
-# ── Model factory ──────────────────────────────────────────────────────────────
+# Model naming and configuration helpers
+
+def slugify_model_name(name: str) -> str:
+    """Convert a user/model name into a filesystem-safe identifier."""
+    slug = re.sub(r"[^a-zA-Z0-9_.-]+", "_", str(name).strip().lower()).strip("._-")
+    if not slug:
+        raise ValueError("model_name cannot be empty.")
+    return slug
+
+
+def parse_encoder_weights(value: str | None) -> str | None:
+    """Allow CLI values like 'none' to disable pretrained encoder weights."""
+    if value is None:
+        return None
+    value = str(value).strip()
+    if value.lower() in {"", "none", "null", "false"}:
+        return None
+    return value
+
+
+def resolve_model_name(
+    model_source: str = MODEL_SOURCE_SMP,
+    model_name: str | None = None,
+    arch: str = "unet",
+    encoder_name: str = "resnet34",
+) -> str:
+    """
+    Resolve the stable model identity used for output folders and checkpoint config.
+
+    For smp models, the default is '<arch>_<encoder>' (for example
+    'unet_resnet34'). For custom models, --model_name is required because it is
+    also the registry key in networks/customize_model.py.
+    """
+    source = model_source.lower()
+    if source not in MODEL_SOURCES:
+        raise ValueError(f"model_source must be one of {MODEL_SOURCES}, got '{model_source}'.")
+
+    if model_name:
+        return slugify_model_name(model_name)
+
+    if source == MODEL_SOURCE_CUSTOM:
+        raise ValueError("--model_name is required when --model_source custom is used.")
+
+    return slugify_model_name(f"{arch}_{encoder_name}")
+
+
+def available_model_names(model_source: str | None = None) -> list[str]:
+    """Return known model names for error messages or UI use."""
+    if model_source is None:
+        return sorted(list(SUPPORTED_ARCHS) + list(CUSTOM_MODEL_BUILDERS))
+    source = model_source.lower()
+    if source == MODEL_SOURCE_SMP:
+        return sorted(SUPPORTED_ARCHS)
+    if source == MODEL_SOURCE_CUSTOM:
+        return sorted(CUSTOM_MODEL_BUILDERS)
+    raise ValueError(f"Unknown model_source '{model_source}'.")
+
+
+# Model factory
 
 def build_model(
     arch: str = "unet",
     encoder_name: str = "resnet34",
-    encoder_weights: str = "imagenet",
+    encoder_weights: str | None = "imagenet",
     in_channels: int = 3,
     num_classes: int = 1,
+    model_source: str = MODEL_SOURCE_SMP,
+    model_name: str | None = None,
 ) -> nn.Module:
     """
     Build a binary segmentation model.
-    二値セグメンテーションモデルを構築します。
-
-    Why activation=None?
-      We output raw logits and apply sigmoid only when computing metrics or
-      running inference.  This is numerically more stable during training
-      because BCEWithLogitsLoss and DiceLoss(from_logits=True) combine the
-      sigmoid with the loss in a single, numerically stable operation.
-
-      なぜ activation=None か？
-      生のロジットを出力し、メトリクス計算や推論時のみsigmoidを適用します。
-      BCEWithLogitsLossとDiceLoss(from_logits=True)がsigmoidと損失を
-      数値的に安定した単一の演算に結合するため、訓練中はこのほうが
-      数値的に安定しています。
 
     Args:
-        arch           : Architecture name. One of SUPPORTED_ARCHS.
-                         アーキテクチャ名。SUPPORTED_ARCHS のいずれか。
-        encoder_name   : Timm/smp encoder backbone name.
-                         Timm/smpのエンコーダバックボーン名。
-        encoder_weights: Pre-trained weight source ("imagenet" or None).
-                         事前学習済み重みのソース（"imagenet" または None）。
-        in_channels    : Number of input image channels (3 for RGB).
-                         入力画像チャンネル数（RGBは3）。
-        num_classes    : Number of output channels.  1 for binary segmentation.
-                         出力チャンネル数。二値セグメンテーションは1。
+        model_source   : "smp" for segmentation_models_pytorch or "custom" for
+                         networks/customize_model.py.
+        model_name     : Stable model identity. Required for custom models.
+        arch           : SMP architecture name, e.g. unet or deeplabv3plus.
+        encoder_name   : SMP/timm encoder backbone name.
+        encoder_weights: Pretrained weight source, e.g. "imagenet" or None.
+        in_channels    : Number of input image channels.
+        num_classes    : Output channels. Use 1 for binary segmentation logits.
 
     Returns:
-        nn.Module  — outputs (N, 1, H, W) float32 logits.
-        (N, 1, H, W) float32 ロジットを出力するnn.Module。
+        nn.Module that outputs (N, 1, H, W) logits.
     """
+    source = model_source.lower()
+    if source not in MODEL_SOURCES:
+        raise ValueError(f"model_source must be one of {MODEL_SOURCES}, got '{model_source}'.")
+
+    if source == MODEL_SOURCE_CUSTOM:
+        custom_name = resolve_model_name(source, model_name, arch, encoder_name)
+        return build_custom_model(
+            custom_name,
+            in_channels=in_channels,
+            num_classes=num_classes,
+        )
+
     if not _SMP_AVAILABLE:
         raise ImportError(
             "segmentation_models_pytorch is not installed.\n"
-            "Run: pip install segmentation-models-pytorch\n"
-            "segmentation_models_pytorchがインストールされていません。\n"
-            "実行: pip install segmentation-models-pytorch"
+            "Run: pip install segmentation-models-pytorch"
         )
 
     arch_lower = arch.lower()
     if arch_lower not in SUPPORTED_ARCHS:
         raise ValueError(
-            f"Unsupported architecture '{arch}'.\n"
+            f"Unsupported SMP architecture '{arch}'.\n"
             f"Choose from: {list(SUPPORTED_ARCHS.keys())}"
         )
 
     model = SUPPORTED_ARCHS[arch_lower](
         encoder_name    = encoder_name,
-        encoder_weights = encoder_weights,
+        encoder_weights = parse_encoder_weights(encoder_weights),
         in_channels     = in_channels,
         classes         = num_classes,
-        activation      = None,   # raw logits — more numerically stable
+        activation      = None,
     )
 
     return model

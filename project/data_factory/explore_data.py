@@ -30,8 +30,12 @@ from pathlib import Path
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+
+plt.rcParams["pdf.fonttype"] = 42
+plt.rcParams["ps.fonttype"] = 42
 import numpy as np
 from PIL import Image
+import torch
 
 # Allow running as `python data_factory/explore_data.py` from the project root
 # プロジェクトルートから `python data_factory/explore_data.py` として実行可能にする
@@ -120,19 +124,19 @@ def analyse_class_balance(
     fig, ax = plt.subplots(figsize=(7, 3))
     ax.hist(road_ratios, bins=20, color="#2ecc71", edgecolor="white", alpha=0.85)
     ax.axvline(mean_road, color="#e74c3c", linewidth=2,
-               label=f"Mean / 平均: {mean_road:.1f}%")
-    ax.set_xlabel("Road pixel ratio per image (%) / 画像ごとの道路ピクセル比率 (%)")
-    ax.set_ylabel("Count / 枚数")
-    ax.set_title(
-        f"Class Balance — {split} split (n={len(road_ratios)})\n"
-        f"クラスバランス — {split}分割"
-    )
+               label=f"Mean: {mean_road:.1f}%")
+    ax.set_xlabel("Road pixel ratio per image (%)")
+    ax.set_ylabel("Count")
+    ax.set_title(f"Class Balance - {split} split (n={len(road_ratios)})")
     ax.legend()
     plt.tight_layout()
     out = Path(__file__).parent / "class_balance.png"
-    plt.savefig(out, dpi=120)
+    plt.savefig(out, dpi=160)
+    pdf_out = out.with_suffix(".pdf")
+    plt.savefig(pdf_out, dpi=300)
     plt.show()
-    print(f"   Saved → {out}")
+    print(f"   Saved -> {out}")
+    print(f"   Saved -> {pdf_out}")
     print()
 
     return road_ratios
@@ -240,14 +244,14 @@ def visualise_samples(
     fig, axes = plt.subplots(n, 3, figsize=(14, 4.2 * n))
     fig.suptitle(
         f"Cityscapes Binary Dataset — {split} split  (crop {crop_size}×{crop_size})\n"
-        f"Green = Drivable Road (class 1) / 緑 = 走行可能な道路（クラス1）",
+        f"Green = Drivable Road (class 1)",
         fontsize=12, fontweight="bold",
     )
 
     col_titles = [
-        "Image / 画像",
-        "Binary Mask / バイナリマスク\n(white=road · black=bg)",
-        "Overlay / オーバーレイ\n(green=road)",
+        "Image",
+        "Binary Mask\n(white=road, black=bg)",
+        "Overlay\n(green=road)",
     ]
     for col, title in enumerate(col_titles):
         axes[0, col].set_title(title, fontsize=9)
@@ -282,9 +286,9 @@ def visualise_samples(
 
     # Legend
     legend_handles = [
-        mpatches.Patch(color="white",          label="Road / 道路 (class 1)"),
-        mpatches.Patch(color="black",          label="Background / 背景 (class 0)"),
-        mpatches.Patch(color=(0.18, 0.80, 0.44), label="Road highlight / 道路ハイライト"),
+        mpatches.Patch(color="white",          label="Road (class 1)"),
+        mpatches.Patch(color="black",          label="Background (class 0)"),
+        mpatches.Patch(color=(0.18, 0.80, 0.44), label="Road highlight"),
     ]
     fig.legend(
         handles=legend_handles,
@@ -294,9 +298,12 @@ def visualise_samples(
 
     plt.tight_layout()
     out = Path(__file__).parent / "sample_visualisation.png"
-    plt.savefig(out, dpi=120, bbox_inches="tight")
+    plt.savefig(out, dpi=160, bbox_inches="tight")
+    pdf_out = out.with_suffix(".pdf")
+    plt.savefig(pdf_out, dpi=300, bbox_inches="tight")
     plt.show()
-    print(f"   Saved → {out}")
+    print(f"   Saved -> {out}")
+    print(f"   Saved -> {pdf_out}")
     print()
 
 

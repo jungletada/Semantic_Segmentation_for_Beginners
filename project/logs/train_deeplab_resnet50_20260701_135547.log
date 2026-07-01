@@ -1,0 +1,36 @@
+/home/peng/anaconda3/envs/medseg/lib/python3.11/site-packages/torch/optim/lr_scheduler.py:28: UserWarning: The verbose parameter is deprecated. Please use get_last_lr() to access the learning rate.
+  warnings.warn("The verbose parameter is deprecated. Please use get_last_lr() "
+
+Device / デバイス: cuda
+GPU: NVIDIA RTX A6000
+
+Model identity: deeplab_resnet50  (source=smp)
+
+Building DataLoaders... / DataLoaderを構築中...
+DataLoader ready — split=train  samples=2975  batches=371  batch_size=8
+DataLoader ready — split=val  samples=500  batches=63  batch_size=8
+
+Building model... / モデルを構築中...
+=======================================================
+Model Summary / モデルサマリー
+=======================================================
+  Class           : DeepLabV3Plus
+  Encoder         : ResNetEncoder
+  Total params    :   26,677,585
+  Trainable params:   26,677,585
+  Encoder params  :   23,508,032
+  Decoder params  :    3,169,553
+  Input shape     : (1, 3, 512, 512)
+  Output shape    : (1, 1, 512, 512)   (logits, before sigmoid)
+=======================================================
+
+============================================================
+Starting training  |  epochs=50  |  batch=8
+訓練開始           |  エポック=50  |  バッチ=8
+============================================================
+
+Epoch [  1/50]  time=57s  lr=1.00e-04
+  Train — loss=0.3596  iou=0.8159  dice=0.8939
+  Val   — loss=0.1542  iou=0.9197  dice=0.9494  pa=0.9638
+  ★ New best val IoU: 0.9197 — saved → checkpoints/deeplab_resnet50/best.pth
+

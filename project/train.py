@@ -37,27 +37,41 @@ import time
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+
+plt.rcParams["pdf.fonttype"] = 42
+plt.rcParams["ps.fonttype"] = 42
 import torch
 import torch.nn as nn
 from torch.cuda.amp import GradScaler, autocast
 
 from data_factory.dataset import get_dataloader
 from utils.metrics import MetricTracker, binary_dice, binary_iou, pixel_accuracy
-from networks.model import CombinedLoss, build_model, freeze_encoder, print_model_summary, unfreeze_encoder
+from networks.model import (
+    CombinedLoss,
+    build_model,
+    freeze_encoder,
+    parse_encoder_weights,
+    print_model_summary,
+    resolve_model_name,
+    unfreeze_encoder,
+)
 from data_factory.transforms import get_train_transform, get_val_transform
 
 # ── Defaults (mirrors topics.md §6 Phase 3 hyperparameter table) ──────────────
 DEFAULTS = {
+    "model_source": "smp",
+    "model_name"  : None,
     "arch"        : "unet",
     "encoder"     : "resnet34",
+    "encoder_weights": "imagenet",
     "epochs"      : 50,
     "batch_size"  : 8,
     "lr"          : 1e-4,
     "weight_decay": 1e-4,
     "crop_size"   : 512,
     "num_workers" : 4,
-    "patience"    : 7,       # early-stopping patience (epochs without improvement)
-    "warmup"      : 0,       # freeze encoder for this many epochs at the start
+    "patience"    : 7,
+    "warmup"      : 0,
     "checkpoint_dir": "checkpoints",
 }
 
@@ -239,23 +253,23 @@ def plot_history(history: dict[str, list], save_path: Path) -> None:
     epochs = range(1, len(history["train_loss"]) + 1)
 
     fig, axes = plt.subplots(1, 2, figsize=(13, 4))
-    fig.suptitle("Training History / 訓練履歴", fontsize=12, fontweight="bold")
+    fig.suptitle("Training History", fontsize=12, fontweight="bold")
 
     # Loss curve / 損失曲線
-    axes[0].plot(epochs, history["train_loss"], label="Train loss / 訓練損失",
+    axes[0].plot(epochs, history["train_loss"], label="Train loss",
                  color="#3498db", linewidth=2)
-    axes[0].plot(epochs, history["val_loss"],   label="Val loss / 検証損失",
+    axes[0].plot(epochs, history["val_loss"],   label="Val loss",
                  color="#e74c3c", linewidth=2, linestyle="--")
     axes[0].set_xlabel("Epoch")
     axes[0].set_ylabel("Loss (Dice + BCE)")
-    axes[0].set_title("Loss / 損失")
+    axes[0].set_title("Loss")
     axes[0].legend()
     axes[0].grid(alpha=0.3)
 
     # IoU curve / IoU曲線
-    axes[1].plot(epochs, history["train_iou"], label="Train IoU / 訓練IoU",
+    axes[1].plot(epochs, history["train_iou"], label="Train IoU",
                  color="#3498db", linewidth=2)
-    axes[1].plot(epochs, history["val_iou"],   label="Val IoU / 検証IoU",
+    axes[1].plot(epochs, history["val_iou"],   label="Val IoU",
                  color="#e74c3c", linewidth=2, linestyle="--")
 
     # Mark the best epoch / ベストエポックをマーク
@@ -271,15 +285,19 @@ def plot_history(history: dict[str, list], save_path: Path) -> None:
 
     axes[1].set_xlabel("Epoch")
     axes[1].set_ylabel("IoU (Jaccard)")
-    axes[1].set_title("Validation IoU (road class) / 検証IoU（道路クラス）")
+    axes[1].set_title("Validation IoU (road class)")
     axes[1].legend()
     axes[1].grid(alpha=0.3)
     axes[1].set_ylim(0, 1)
 
     plt.tight_layout()
-    plt.savefig(save_path, dpi=120, bbox_inches="tight")
+    plt.savefig(save_path, dpi=160, bbox_inches="tight")
+    if save_path.suffix.lower() != ".pdf":
+        pdf_path = save_path.with_suffix(".pdf")
+        plt.savefig(pdf_path, dpi=300, bbox_inches="tight")
+        print(f"Training curve saved -> {pdf_path}")
     plt.close()
-    print(f"Training curve saved → {save_path}")
+    print(f"Training curve saved -> {save_path}")
 
 
 # ── Main training loop ─────────────────────────────────────────────────────────
@@ -295,15 +313,28 @@ def train(args: argparse.Namespace) -> None:
     if device.type == "cuda":
         print(f"GPU: {torch.cuda.get_device_name(0)}")
 
-    # ── Config dict (saved inside checkpoints) ────────────────────────────────
+    # Model identity and config saved inside checkpoints
+    model_source = args.model_source.lower()
+    encoder_weights = parse_encoder_weights(args.encoder_weights)
+    model_name = resolve_model_name(
+        model_source=model_source,
+        model_name=args.model_name,
+        arch=args.arch,
+        encoder_name=args.encoder,
+    )
+    print(f"\nModel identity: {model_name}  (source={model_source})")
+
     config = {
-        "arch"        : args.arch,
-        "encoder"     : args.encoder,
-        "epochs"      : args.epochs,
-        "batch_size"  : args.batch_size,
-        "lr"          : args.lr,
-        "weight_decay": args.weight_decay,
-        "crop_size"   : args.crop_size,
+        "model_source"   : model_source,
+        "model_name"     : model_name,
+        "arch"           : args.arch,
+        "encoder"        : args.encoder,
+        "encoder_weights": encoder_weights,
+        "epochs"         : args.epochs,
+        "batch_size"     : args.batch_size,
+        "lr"             : args.lr,
+        "weight_decay"   : args.weight_decay,
+        "crop_size"      : args.crop_size,
     }
 
     # ── DataLoaders ────────────────────────────────────────────────────────────
@@ -326,9 +357,11 @@ def train(args: argparse.Namespace) -> None:
     # ── Model ──────────────────────────────────────────────────────────────────
     print("\nBuilding model... / モデルを構築中...")
     model = build_model(
+        model_source   = model_source,
+        model_name     = model_name,
         arch           = args.arch,
         encoder_name   = args.encoder,
-        encoder_weights= "imagenet",
+        encoder_weights= encoder_weights,
     ).to(device)
 
     print_model_summary(model, crop_size=args.crop_size)
@@ -373,7 +406,7 @@ def train(args: argparse.Namespace) -> None:
     }
     no_improve_count = 0
 
-    ckpt_dir  = Path(args.checkpoint_dir)
+    ckpt_dir  = Path(args.checkpoint_dir) / model_name
     best_path = ckpt_dir / "best.pth"
     last_path = ckpt_dir / "last.pth"
 
@@ -485,12 +518,17 @@ def parse_args() -> argparse.Namespace:
     )
 
     # Model
+    parser.add_argument("--model_source", type=str, default=DEFAULTS["model_source"],
+                        choices=["smp", "custom"],
+                        help="Model source: smp or custom.")
+    parser.add_argument("--model_name", type=str, default=DEFAULTS["model_name"],
+                        help="Model identity. For smp this names the output folder; for custom it selects the registered model.")
     parser.add_argument("--arch",    type=str, default=DEFAULTS["arch"],
-                        choices=["unet", "unetplusplus", "deeplabv3plus"],
-                        help="Segmentation architecture. / セグメンテーションアーキテクチャ。")
+                        help="SMP architecture, e.g. unet, unetplusplus, deeplabv3plus.")
     parser.add_argument("--encoder", type=str, default=DEFAULTS["encoder"],
-                        help="Encoder backbone name (e.g. resnet34, resnet50).\n"
-                             "エンコーダバックボーン名（例：resnet34, resnet50）。")
+                        help="SMP encoder backbone name (e.g. resnet34, resnet50).")
+    parser.add_argument("--encoder_weights", type=str, default=DEFAULTS["encoder_weights"],
+                        help="SMP encoder weights, e.g. imagenet. Use none to disable pretrained weights.")
 
     # Training
     parser.add_argument("--epochs",       type=int,   default=DEFAULTS["epochs"])

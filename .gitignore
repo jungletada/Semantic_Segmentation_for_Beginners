@@ -1,4 +1,6 @@
 .DS_Store
+*.zip
 project_data/
 *.pth
 *.pt
+project/data/*

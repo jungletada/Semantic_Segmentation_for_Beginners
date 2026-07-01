@@ -1,0 +1,196 @@
+/home/peng/anaconda3/envs/medseg/lib/python3.11/site-packages/torch/optim/lr_scheduler.py:28: UserWarning: The verbose parameter is deprecated. Please use get_last_lr() to access the learning rate.
+  warnings.warn("The verbose parameter is deprecated. Please use get_last_lr() "
+
+Device / デバイス: cuda
+GPU: NVIDIA RTX A6000
+
+Building DataLoaders... / DataLoaderを構築中...
+DataLoader ready — split=train  samples=2975  batches=371  batch_size=8
+DataLoader ready — split=val  samples=500  batches=63  batch_size=8
+
+Building model... / モデルを構築中...
+=======================================================
+Model Summary / モデルサマリー
+=======================================================
+  Class           : Unet
+  Encoder         : ResNetEncoder
+  Total params    :   24,436,369
+  Trainable params:   24,436,369
+  Encoder params  :   21,284,672
+  Decoder params  :    3,151,697
+  Input shape     : (1, 3, 512, 512)
+  Output shape    : (1, 1, 512, 512)   (logits, before sigmoid)
+=======================================================
+
+============================================================
+Starting training  |  epochs=50  |  batch=8
+訓練開始           |  エポック=50  |  バッチ=8
+============================================================
+
+Epoch [  1/50]  time=45s  lr=1.00e-04
+  Train — loss=0.4700  iou=0.7955  dice=0.8803
+  Val   — loss=0.2124  iou=0.9122  dice=0.9452  pa=0.9588
+  ★ New best val IoU: 0.9122 — saved → checkpoints/best.pth
+
+Epoch [  2/50]  time=45s  lr=1.00e-04
+  Train — loss=0.2563  iou=0.8707  dice=0.9290
+  Val   — loss=0.1516  iou=0.9247  dice=0.9519  pa=0.9671
+  ★ New best val IoU: 0.9247 — saved → checkpoints/best.pth
+
+Epoch [  3/50]  time=45s  lr=1.00e-04
+  Train — loss=0.2169  iou=0.8844  dice=0.9371
+  Val   — loss=0.1404  iou=0.9236  dice=0.9511  pa=0.9676
+  No improvement (1/7). Best so far: 0.9247
+
+Epoch [  4/50]  time=45s  lr=1.00e-04
+  Train — loss=0.1979  iou=0.8918  dice=0.9411
+  Val   — loss=0.1359  iou=0.9289  dice=0.9542  pa=0.9682
+  ★ New best val IoU: 0.9289 — saved → checkpoints/best.pth
+
+Epoch [  5/50]  time=45s  lr=1.00e-04
+  Train — loss=0.1825  iou=0.8993  dice=0.9457
+  Val   — loss=0.1303  iou=0.9355  dice=0.9578  pa=0.9694
+  ★ New best val IoU: 0.9355 — saved → checkpoints/best.pth
+
+Epoch [  6/50]  time=45s  lr=1.00e-04
+  Train — loss=0.1726  iou=0.9052  dice=0.9489
+  Val   — loss=0.1324  iou=0.9310  dice=0.9550  pa=0.9704
+  No improvement (1/7). Best so far: 0.9355
+
+Epoch [  7/50]  time=45s  lr=1.00e-04
+  Train — loss=0.1613  iou=0.9102  dice=0.9517
+  Val   — loss=0.1421  iou=0.9279  dice=0.9535  pa=0.9672
+  No improvement (2/7). Best so far: 0.9355
+
+Epoch [  8/50]  time=45s  lr=1.00e-04
+  Train — loss=0.1560  iou=0.9129  dice=0.9534
+  Val   — loss=0.1381  iou=0.9249  dice=0.9507  pa=0.9684
+  No improvement (3/7). Best so far: 0.9355
+
+Epoch [  9/50]  time=45s  lr=1.00e-04
+  Train — loss=0.1521  iou=0.9147  dice=0.9542
+  Val   — loss=0.1290  iou=0.9212  dice=0.9486  pa=0.9672
+  No improvement (4/7). Best so far: 0.9355
+
+Epoch [ 10/50]  time=45s  lr=1.00e-04
+  Train — loss=0.1505  iou=0.9148  dice=0.9543
+  Val   — loss=0.1130  iou=0.9321  dice=0.9555  pa=0.9727
+  No improvement (5/7). Best so far: 0.9355
+
+Epoch [ 11/50]  time=45s  lr=1.00e-04
+  Train — loss=0.1586  iou=0.9102  dice=0.9514
+  Val   — loss=0.1266  iou=0.9226  dice=0.9489  pa=0.9673
+  No improvement (6/7). Best so far: 0.9355
+
+Epoch [ 12/50]  time=45s  lr=5.00e-05
+  Train — loss=0.1316  iou=0.9257  dice=0.9604
+  Val   — loss=0.1011  iou=0.9377  dice=0.9585  pa=0.9754
+  ★ New best val IoU: 0.9377 — saved → checkpoints/best.pth
+
+Epoch [ 13/50]  time=45s  lr=5.00e-05
+  Train — loss=0.1240  iou=0.9309  dice=0.9633
+  Val   — loss=0.1045  iou=0.9364  dice=0.9579  pa=0.9742
+  No improvement (1/7). Best so far: 0.9377
+
+Epoch [ 14/50]  time=45s  lr=5.00e-05
+  Train — loss=0.1211  iou=0.9320  dice=0.9638
+  Val   — loss=0.1222  iou=0.9244  dice=0.9500  pa=0.9695
+  No improvement (2/7). Best so far: 0.9377
+
+Epoch [ 15/50]  time=45s  lr=5.00e-05
+  Train — loss=0.1205  iou=0.9302  dice=0.9628
+  Val   — loss=0.1072  iou=0.9356  dice=0.9574  pa=0.9728
+  No improvement (3/7). Best so far: 0.9377
+
+Epoch [ 16/50]  time=45s  lr=5.00e-05
+  Train — loss=0.1166  iou=0.9326  dice=0.9643
+  Val   — loss=0.1198  iou=0.9373  dice=0.9584  pa=0.9734
+  No improvement (4/7). Best so far: 0.9377
+
+Epoch [ 17/50]  time=45s  lr=5.00e-05
+  Train — loss=0.1130  iou=0.9348  dice=0.9655
+  Val   — loss=0.1185  iou=0.9286  dice=0.9527  pa=0.9713
+  No improvement (5/7). Best so far: 0.9377
+
+Epoch [ 18/50]  time=45s  lr=5.00e-05
+  Train — loss=0.1097  iou=0.9387  dice=0.9676
+  Val   — loss=0.1297  iou=0.9267  dice=0.9510  pa=0.9702
+  No improvement (6/7). Best so far: 0.9377
+
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:279: UserWarning: Glyph 25613 (\N{CJK UNIFIED IDEOGRAPH-640D}) missing from font(s) DejaVu Sans.
+  plt.tight_layout()
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:279: UserWarning: Glyph 22833 (\N{CJK UNIFIED IDEOGRAPH-5931}) missing from font(s) DejaVu Sans.
+  plt.tight_layout()
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:279: UserWarning: Glyph 35347 (\N{CJK UNIFIED IDEOGRAPH-8A13}) missing from font(s) DejaVu Sans.
+  plt.tight_layout()
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:279: UserWarning: Glyph 32244 (\N{CJK UNIFIED IDEOGRAPH-7DF4}) missing from font(s) DejaVu Sans.
+  plt.tight_layout()
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:279: UserWarning: Glyph 26908 (\N{CJK UNIFIED IDEOGRAPH-691C}) missing from font(s) DejaVu Sans.
+  plt.tight_layout()
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:279: UserWarning: Glyph 35388 (\N{CJK UNIFIED IDEOGRAPH-8A3C}) missing from font(s) DejaVu Sans.
+  plt.tight_layout()
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:279: UserWarning: Glyph 65288 (\N{FULLWIDTH LEFT PARENTHESIS}) missing from font(s) DejaVu Sans.
+  plt.tight_layout()
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:279: UserWarning: Glyph 36947 (\N{CJK UNIFIED IDEOGRAPH-9053}) missing from font(s) DejaVu Sans.
+  plt.tight_layout()
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:279: UserWarning: Glyph 36335 (\N{CJK UNIFIED IDEOGRAPH-8DEF}) missing from font(s) DejaVu Sans.
+  plt.tight_layout()
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:279: UserWarning: Glyph 12463 (\N{KATAKANA LETTER KU}) missing from font(s) DejaVu Sans.
+  plt.tight_layout()
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:279: UserWarning: Glyph 12521 (\N{KATAKANA LETTER RA}) missing from font(s) DejaVu Sans.
+  plt.tight_layout()
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:279: UserWarning: Glyph 12473 (\N{KATAKANA LETTER SU}) missing from font(s) DejaVu Sans.
+  plt.tight_layout()
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:279: UserWarning: Glyph 65289 (\N{FULLWIDTH RIGHT PARENTHESIS}) missing from font(s) DejaVu Sans.
+  plt.tight_layout()
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:279: UserWarning: Glyph 23653 (\N{CJK UNIFIED IDEOGRAPH-5C65}) missing from font(s) DejaVu Sans.
+  plt.tight_layout()
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:279: UserWarning: Glyph 27508 (\N{CJK UNIFIED IDEOGRAPH-6B74}) missing from font(s) DejaVu Sans.
+  plt.tight_layout()
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:280: UserWarning: Glyph 25613 (\N{CJK UNIFIED IDEOGRAPH-640D}) missing from font(s) DejaVu Sans.
+  plt.savefig(save_path, dpi=120, bbox_inches="tight")
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:280: UserWarning: Glyph 22833 (\N{CJK UNIFIED IDEOGRAPH-5931}) missing from font(s) DejaVu Sans.
+  plt.savefig(save_path, dpi=120, bbox_inches="tight")
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:280: UserWarning: Glyph 35347 (\N{CJK UNIFIED IDEOGRAPH-8A13}) missing from font(s) DejaVu Sans.
+  plt.savefig(save_path, dpi=120, bbox_inches="tight")
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:280: UserWarning: Glyph 32244 (\N{CJK UNIFIED IDEOGRAPH-7DF4}) missing from font(s) DejaVu Sans.
+  plt.savefig(save_path, dpi=120, bbox_inches="tight")
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:280: UserWarning: Glyph 26908 (\N{CJK UNIFIED IDEOGRAPH-691C}) missing from font(s) DejaVu Sans.
+  plt.savefig(save_path, dpi=120, bbox_inches="tight")
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:280: UserWarning: Glyph 35388 (\N{CJK UNIFIED IDEOGRAPH-8A3C}) missing from font(s) DejaVu Sans.
+  plt.savefig(save_path, dpi=120, bbox_inches="tight")
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:280: UserWarning: Glyph 65288 (\N{FULLWIDTH LEFT PARENTHESIS}) missing from font(s) DejaVu Sans.
+  plt.savefig(save_path, dpi=120, bbox_inches="tight")
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:280: UserWarning: Glyph 36947 (\N{CJK UNIFIED IDEOGRAPH-9053}) missing from font(s) DejaVu Sans.
+  plt.savefig(save_path, dpi=120, bbox_inches="tight")
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:280: UserWarning: Glyph 36335 (\N{CJK UNIFIED IDEOGRAPH-8DEF}) missing from font(s) DejaVu Sans.
+  plt.savefig(save_path, dpi=120, bbox_inches="tight")
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:280: UserWarning: Glyph 12463 (\N{KATAKANA LETTER KU}) missing from font(s) DejaVu Sans.
+  plt.savefig(save_path, dpi=120, bbox_inches="tight")
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:280: UserWarning: Glyph 12521 (\N{KATAKANA LETTER RA}) missing from font(s) DejaVu Sans.
+  plt.savefig(save_path, dpi=120, bbox_inches="tight")
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:280: UserWarning: Glyph 12473 (\N{KATAKANA LETTER SU}) missing from font(s) DejaVu Sans.
+  plt.savefig(save_path, dpi=120, bbox_inches="tight")
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:280: UserWarning: Glyph 65289 (\N{FULLWIDTH RIGHT PARENTHESIS}) missing from font(s) DejaVu Sans.
+  plt.savefig(save_path, dpi=120, bbox_inches="tight")
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:280: UserWarning: Glyph 23653 (\N{CJK UNIFIED IDEOGRAPH-5C65}) missing from font(s) DejaVu Sans.
+  plt.savefig(save_path, dpi=120, bbox_inches="tight")
+/home/peng/code/Semantic_Segmentation_for_Beginners/project/train.py:280: UserWarning: Glyph 27508 (\N{CJK UNIFIED IDEOGRAPH-6B74}) missing from font(s) DejaVu Sans.
+  plt.savefig(save_path, dpi=120, bbox_inches="tight")
+Epoch [ 19/50]  time=45s  lr=2.50e-05
+  Train — loss=0.1009  iou=0.9423  dice=0.9693
+  Val   — loss=0.1176  iou=0.9343  dice=0.9566  pa=0.9712
+  No improvement (7/7). Best so far: 0.9377
+
+Early stopping after 19 epochs (no improvement for 7 epochs).
+7 エポック改善なし — 19 エポックで早期終了。
+
+============================================================
+Training complete! / 訓練完了！
+  Epochs run         : 19
+  Best val IoU       : 0.9377
+  Best model saved   : checkpoints/best.pth
+  Last model saved   : checkpoints/last.pth
+============================================================
+
+Training curve saved → checkpoints/training_curves.png
