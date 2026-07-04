@@ -204,7 +204,16 @@ python train.py --data_root data/cityscapes --model_name unet_resnet34 --resume 
 
 **Custom models / Custom model interface:**
 
-Add custom builders in `networks/customize_model.py`, register them with `register_custom_model("your_model", builder)`, then run:
+`networks/customize_model.py` includes a tiny built-in custom model named `simple_custom`. Use it to smoke-test the custom-model path:
+
+```bash
+python train.py \
+    --data_root data/cityscapes \
+    --model_source custom \
+    --model_name simple_custom
+```
+
+To add your own model, define a builder in `networks/customize_model.py`, register it with `register_custom_model("your_model", builder)`, then run:
 
 ```bash
 python train.py --data_root data/cityscapes --model_source custom --model_name your_model
@@ -216,6 +225,15 @@ python train.py --data_root data/cityscapes --model_source custom --model_name y
 
 ```bash
 python evaluate.py --data_root data/cityscapes --model_name unet_resnet34
+```
+
+For a custom model checkpoint, pass the same model identity:
+
+```bash
+python evaluate.py \
+    --data_root data/cityscapes \
+    --model_source custom \
+    --model_name simple_custom
 ```
 
 **All arguments / 全引数:**
@@ -262,6 +280,16 @@ python utils/visualize_results.py \
     --data_root  data/cityscapes \
     --checkpoint checkpoints/best.pth \
     --n          6
+```
+
+For a custom model checkpoint saved under `checkpoints/<model_name>/`, omit `--checkpoint` and specify the custom model identity:
+
+```bash
+python utils/visualize_results.py \
+    --data_root data/cityscapes \
+    --model_source custom \
+    --model_name simple_custom \
+    --n 6
 ```
 
 ### Best vs. worst predictions / ベストとワーストの予測
